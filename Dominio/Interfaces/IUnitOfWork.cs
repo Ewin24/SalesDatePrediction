@@ -3,8 +3,9 @@
     public interface IUnitOfWork
     {
         IProduct Products { get; }
-        ICustomer Customer { get; }
+        ICustomer Customers { get; }
         IEmployee Employees { get; }
-        IOrder Order { get; }
+        IOrder Orders { get; }
+        IShipper Shippers { get; }
     }
 }
