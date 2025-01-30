@@ -5,10 +5,6 @@
     <ProjectReference Include="..\persistencia\Persistence.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="UnitOfWork\" />
-  </ItemGroup>
-
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
