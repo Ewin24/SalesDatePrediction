@@ -1,22 +1,22 @@
 ﻿using API.Dtos.Shipper;
-using Aplication.Repository;
+using Domain.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
-    public class ShippersController : ControllerBase
+    public class ShippersController : BaseController
     {
-        private readonly ShipperRepository _repository;
+        private readonly IUnitOfWork _unitOfWork;
 
-        public ShippersController(ShipperRepository repository)
+        public ShippersController(IUnitOfWork unitOfWork)
         {
-            _repository = repository;
+            _unitOfWork = unitOfWork;
         }
 
         [HttpGet]
         public async Task<ActionResult<List<ShipperDto>>> GetShippers()
         {
-            var shippers = await _repository.GetShippersAsync();
+            var shippers = await _unitOfWork.Shippers.GetAllAsync();
             return Ok(shippers);
         }
     }

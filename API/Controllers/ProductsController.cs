@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
-    public class ProductsController : ControllerBase
+    public class ProductsController : BaseController
     {
         private readonly IUnitOfWork _unitOfWork;
 
