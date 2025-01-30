@@ -11,6 +11,7 @@ namespace Aplication.UnitOfWork
         private IEmployee _employee;
         private IOrder _order;
         private ICustomer _customer;
+        private IShipper _shipper;
 
         public UnitOfWork(ApplicationDbContext context)
         {
@@ -41,7 +42,7 @@ namespace Aplication.UnitOfWork
             }
         }
 
-        public IOrder Order
+        public IOrder Orders
         {
             get
             {
@@ -53,7 +54,7 @@ namespace Aplication.UnitOfWork
             }
         }
 
-        public ICustomer Customer
+        public ICustomer Customers
         {
             get
             {
@@ -62,6 +63,18 @@ namespace Aplication.UnitOfWork
                     _customer = new CustomerRepository(_context);
                 }
                 return _customer;
+            }
+        }
+
+        public IShipper Shippers
+        {
+            get
+            {
+                if (_shipper == null)
+                {
+                    _shipper = new ShipperRepository(_context);
+                }
+                return _shipper;
             }
         }
 

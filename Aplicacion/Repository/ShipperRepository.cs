@@ -31,9 +31,9 @@ namespace Aplication.Repository
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<Shipper>> GetAllAsync()
+        public async Task<IEnumerable<Shipper>> GetAllAsync()
         {
-            throw new NotImplementedException();
+            return await _context.Shippers.ToListAsync();
         }
 
         public Task<(int totalRegistros, IEnumerable<Shipper> registros)> GetAllAsync(int pageIndex, int pageSize, string search)
@@ -49,20 +49,6 @@ namespace Aplication.Repository
         public Task<Shipper> GetByIdAsync(int id)
         {
             throw new NotImplementedException();
-        }
-
-        public async Task<List<Shipper>> GetShippersAsync()
-        {
-            var shippers = await _context.Shippers
-                .OrderBy(s => s.companyname) // Ordenar por nombre de la compañía
-                .Select(s => new Shipper
-                {
-                    shipperid = s.shipperid,
-                    companyname = s.companyname
-                })
-                .ToListAsync();
-
-            return shippers;
         }
 
         public void Remove(Shipper entity)

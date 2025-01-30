@@ -31,9 +31,9 @@ namespace Aplication.Repository
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<Employee>> GetAllAsync()
+        public async Task<IEnumerable<Employee>> GetAllAsync()
         {
-            throw new NotImplementedException();
+            return await _context.Employees.ToListAsync();
         }
 
         public Task<(int totalRegistros, IEnumerable<Employee> registros)> GetAllAsync(int pageIndex, int pageSize, string search)

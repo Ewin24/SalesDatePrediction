@@ -31,9 +31,9 @@ namespace Aplication.Repository
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<Product>> GetAllAsync()
+        public async Task<IEnumerable<Product>> GetAllAsync()
         {
-            throw new NotImplementedException();
+            return await _context.Products.ToListAsync();
         }
 
         public Task<(int totalRegistros, IEnumerable<Product> registros)> GetAllAsync(int pageIndex, int pageSize, string search)
@@ -49,20 +49,6 @@ namespace Aplication.Repository
         public Task<Product> GetByIdAsync(int id)
         {
             throw new NotImplementedException();
-        }
-
-        public async Task<List<Product>> GetProductsAsync()
-        {
-            var products = await _context.Products
-                .OrderBy(p => p.productname) // Ordenar por nombre del producto
-                .Select(p => new Product
-                {
-                    productid = p.productid,
-                    productname = p.productname
-                })
-                .ToListAsync();
-
-            return products;
         }
 
         public void Remove(Product entity)
