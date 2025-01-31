@@ -1,6 +1,4 @@
-﻿using Dominio.Entities;
-
-namespace Dominio;
+﻿namespace Dominio;
 
 public partial class OrderTotalsByYear
 {

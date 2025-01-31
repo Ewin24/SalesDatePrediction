@@ -1,9 +1,7 @@
-﻿using API.Dtos.Client;
-using API.Dtos.Order;
-using Aplication.Repository;
+﻿using API.Dtos.Order;
 using AutoMapper;
+using Domain.Entities;
 using Domain.Interfaces;
-using Dominio;
 using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
@@ -20,18 +18,31 @@ namespace API.Controllers
         }
 
         [HttpGet("OrdersByCustomerId/{custid}")]
-        public async Task<ActionResult<List<ClientOrderDto>>> GetOrdersByCustomerId(int custid)
+        public async Task<ActionResult<List<OrderDto>>> GetOrdersByCustomerId(int custid)
         {
             var orders = await _unitOfWork.Orders.GetClientOrdersAsync(custid);
-            return Ok(orders);
+            var ordersDto = _mapper.Map<List<OrderDto>>(orders);
+            return Ok(ordersDto);
         }
 
         [HttpPost]
-        public async Task<ActionResult<int>> CreateOrder([FromBody] OrderDto orderDto)
+        public async Task<ActionResult<int>> CreateOrder([FromBody] CreateOrderDto createOrderDto)
         {
-            Order order = _mapper.Map<Order>(orderDto);
-            var newOrderId = await _unitOfWork.Orders.AddNewOrderAsync(order);
-            return CreatedAtAction(nameof(CreateOrder), new { id = newOrderId }, newOrderId);
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            try
+            {
+                var createOrder = _mapper.Map<CreateOrder>(createOrderDto);
+                var newOrderId = await _unitOfWork.Orders.AddNewOrderAsync(createOrder);
+                return CreatedAtAction(nameof(CreateOrder), new { id = newOrderId }, newOrderId);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error creating order: {ex.Message}");
+            }
         }
     }
 }

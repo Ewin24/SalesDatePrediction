@@ -2,19 +2,19 @@
 {
     public class OrderDto
     {
-        public int EmpId { get; set; }               // Employee ID
-        public int ShipperId { get; set; }           // Shipper ID
-        public string ShipName { get; set; }         // Ship Name
-        public string ShipAddress { get; set; }      // Ship Address
-        public string ShipCity { get; set; }         // Ship City
-        public DateTime OrderDate { get; set; }      // Order Date
-        public DateTime RequiredDate { get; set; }   // Required Date
-        public DateTime? ShippedDate { get; set; }   // Shipped Date (puede ser NULL)
-        public decimal Freight { get; set; }         // Freight
-        public string ShipCountry { get; set; }      // Ship Country
-        public int ProductId { get; set; }           // Product ID para OrderDetails
-        public decimal UnitPrice { get; set; }       // Unit Price para OrderDetails
-        public short Qty { get; set; }               // Quantity para OrderDetails
-        public decimal Discount { get; set; }        // Discount para OrderDetails
+        public int OrderId { get; set; }
+        public int? CustId { get; set; }
+        public int EmpId { get; set; }
+        public DateTime OrderDate { get; set; }
+        public DateTime RequiredDate { get; set; }
+        public DateTime? ShippedDate { get; set; }
+        public int ShipperId { get; set; }
+        public decimal Freight { get; set; }
+        public string ShipName { get; set; } = null!;
+        public string ShipAddress { get; set; } = null!;
+        public string ShipCity { get; set; } = null!;
+        public string? ShipRegion { get; set; }
+        public string? ShipPostalCode { get; set; }
+        public string ShipCountry { get; set; } = null!;
     }
 }

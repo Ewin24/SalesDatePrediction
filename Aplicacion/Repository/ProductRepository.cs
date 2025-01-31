@@ -46,9 +46,9 @@ namespace Aplication.Repository
             throw new NotImplementedException();
         }
 
-        public Task<Product> GetByIdAsync(int id)
+        public async Task<Product> GetByIdAsync(int id)
         {
-            throw new NotImplementedException();
+            return await _context.Products.FirstOrDefaultAsync(p => p.productid == id);
         }
 
         public void Remove(Product entity)

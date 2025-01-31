@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using Domain.Entities;
 using Domain.Interfaces;
 using Dominio;
 using Dominio.Interfaces;
@@ -24,58 +25,71 @@ namespace Aplication.Repository
                 .Select(o => new Order
                 {
                     orderid = o.orderid,
+                    custid = o.custid,
+                    empid = o.empid,
+                    orderdate = o.orderdate,
                     requireddate = o.requireddate,
                     shippeddate = o.shippeddate,
-                    shipname = o.shipname
+                    shipname = o.shipname,
+                    shipaddress = o.shipaddress,
+                    shipcity = o.shipcity,
+                    shipperid = o.shipperid,
+                    freight = o.freight,
+                    shipregion = o.shipregion,
+                    shippostalcode = o.shippostalcode,
+                    shipcountry = o.shipcountry
                 })
                 .ToListAsync();
 
             return orders;
         }
 
-        public async Task<int> AddNewOrderAsync(Order order)
+        public async Task<int> AddNewOrderAsync(CreateOrder createOrderDto)
         {
-            using (var transaction = await _context.Database.BeginTransactionAsync())
+            using var transaction = await _context.Database.BeginTransactionAsync();
+
+            try
             {
-                try
+                var order = new Order
                 {
-                    var newOrder = new Order
-                    {
-                        empid = order.empid,
-                        shipperid = order.shipperid,
-                        shipname = order.shipname,
-                        shipaddress = order.shipaddress,
-                        shipcity = order.shipcity,
-                        orderdate = order.orderdate,
-                        requireddate = order.requireddate,
-                        shippeddate = order.shippeddate,
-                        freight = order.freight,
-                        shipcountry = order.shipcountry
-                    };
+                    custid = createOrderDto.CustomerId,
+                    empid = createOrderDto.EmployeeId,
+                    shipperid = createOrderDto.ShipperId,
+                    shipname = createOrderDto.ShipName,
+                    shipaddress = createOrderDto.ShipAddress,
+                    shipcity = createOrderDto.ShipCity,
+                    shipcountry = createOrderDto.ShipCountry,
+                    orderdate = createOrderDto.OrderDate,
+                    requireddate = createOrderDto.RequiredDate,
+                    shippeddate = createOrderDto.ShippedDate,
+                    freight = createOrderDto.Freight
+                };
 
-                    _context.Orders.Add(newOrder);
-                    await _context.SaveChangesAsync();
+                _context.Orders.Add(order);
+                await _context.SaveChangesAsync();
 
-                    var orderDetail = new OrderDetail
-                    {
-                        orderid = newOrder.orderid,
-                        productid = order.OrderDetails.First().productid,
-                        unitprice = order.OrderDetails.First().unitprice,
-                        qty = order.OrderDetails.First().qty,
-                        discount = order.OrderDetails.First().discount
-                    };
+                Product product = await _context.Products.FirstOrDefaultAsync(p => p.productid == createOrderDto.ProductId);
 
-                    _context.OrderDetails.Add(orderDetail);
-                    await _context.SaveChangesAsync();
-
-                    await transaction.CommitAsync();
-                    return newOrder.orderid;
-                }
-                catch (Exception ex)
+                var orderDetail = new OrderDetail
                 {
-                    await transaction.RollbackAsync(); // Revertir la transacción en caso de error
-                    throw new Exception("Error al agregar la orden: " + ex.Message);
-                }
+                    orderid = order.orderid,
+                    productid = createOrderDto.ProductId,
+                    qty = createOrderDto.Quantity,
+                    unitprice = product.unitprice,
+                    discount = createOrderDto.Discount
+                };
+
+                _context.OrderDetails.Add(orderDetail);
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return order.orderid;
+            }
+            catch (Exception)
+            {
+                await transaction.RollbackAsync();
+                throw;
             }
         }
 
