@@ -1,0 +1,316 @@
+﻿-- REQUERIMIENTO 1
+--Sales Date Prediction
+--• Crear una consulta que retorne por cliente la fecha de cuando ocurrirá la próxima orden, esta 
+--fecha se calcula sumando el promedio de días entre las órdenes existentes del cliente a la fecha 
+--de la última orden.
+--o La base de datos contiene el histórico de registros necesarios para el cálculo de la 
+--predicción.
+--o Columnas:
+--▪ Customer Name: Nombre del cliente
+--▪ Last Order Date: La fecha de la última orden realizada por el cliente
+--▪ Next Predicted Order: Fecha posible de la siguiente orden (fecha ultima orden + 
+--promedio de días entre ordenes anteriores)
+--• Tablas a consultar: Orders, Customers
+WITH OrderDiffs AS (
+    SELECT 
+        custid,
+        orderdate,
+        LAG(orderdate) OVER (PARTITION BY custid ORDER BY orderdate) AS prev_orderdate
+    FROM 
+        Sales.Orders
+),
+OrderIntervals AS (
+    SELECT 
+        custid,
+        DATEDIFF(day, prev_orderdate, orderdate) AS days_between_orders
+    FROM 
+        OrderDiffs
+    WHERE 
+        prev_orderdate IS NOT NULL
+),
+AvgOrderInterval AS (
+    SELECT 
+        custid,
+        AVG(days_between_orders) AS avg_days_between_orders
+    FROM 
+        OrderIntervals
+    GROUP BY 
+        custid
+),
+LastOrderDate AS (
+    SELECT 
+        custid,
+        MAX(orderdate) AS last_order_date
+    FROM 
+        Sales.Orders
+    GROUP BY 
+        custid
+)
+SELECT 
+    c.custid AS CustomerID,
+    c.companyname AS CustomerName,
+    lod.last_order_date AS LastOrderDate,
+    CASE 
+        WHEN aoi.avg_days_between_orders IS NOT NULL THEN 
+            DATEADD(day, aoi.avg_days_between_orders, lod.last_order_date)
+        ELSE 
+            NULL -- no hay suficientes órdenes para calcular un promedio, no predecir
+    END AS NextPredictedOrder
+FROM 
+    Sales.Customers c
+LEFT JOIN 
+    LastOrderDate lod ON c.custid = lod.custid
+LEFT JOIN 
+    AvgOrderInterval aoi ON c.custid = aoi.custid
+WHERE 
+    lod.last_order_date IS NOT NULL; -- Solo incluir clientes con al menos una orden
+   
+CREATE PROCEDURE GetCustomerOrderPredictions
+AS
+BEGIN
+    WITH OrderDiffs AS (
+        SELECT 
+            custid,
+            orderdate,
+            LAG(orderdate) OVER (PARTITION BY custid ORDER BY orderdate) AS prev_orderdate
+        FROM 
+            Sales.Orders
+    ),
+    OrderIntervals AS (
+        SELECT 
+            custid,
+            DATEDIFF(DAY, prev_orderdate, orderdate) AS days_between_orders
+        FROM 
+            OrderDiffs
+        WHERE 
+            prev_orderdate IS NOT NULL
+    ),
+    AvgOrderInterval AS (
+        SELECT 
+            custid,
+            AVG(CAST(days_between_orders AS FLOAT)) AS avg_days
+        FROM 
+            OrderIntervals
+        GROUP BY 
+            custid
+    ),
+    LastOrderDate AS (
+        SELECT 
+            custid,
+            MAX(orderdate) AS last_order_date
+        FROM 
+            Sales.Orders
+        GROUP BY 
+            custid
+    )
+    SELECT 
+        c.custid AS CustomerId,
+        c.companyname AS CustomerName,
+        lod.last_order_date AS LastOrderDate,
+        CASE 
+            WHEN aoi.avg_days IS NOT NULL THEN 
+                DATEADD(DAY, aoi.avg_days, lod.last_order_date)
+            ELSE NULL 
+        END AS NextPredictedOrderDate
+    FROM 
+        Sales.Customers c
+    LEFT JOIN 
+        LastOrderDate lod ON c.custid = lod.custid
+    LEFT JOIN 
+        AvgOrderInterval aoi ON c.custid = aoi.custid
+    WHERE 
+        lod.last_order_date IS NOT NULL;
+END; 
+    
+GetCustomerOrderPredictions
+
+-- REQUERIMIENTO 2
+--Get Client Orders
+--• Crear una consulta que retorne las ordenes de un cliente
+--• Tabla: Orders
+--• Columnas
+--o Orderid
+--o Requireddate
+--o Shippeddate
+--o Shipname
+-- 
+--Prueba Técnica – Desarrollador 6
+--o Shipaddress
+--o Shipcity
+CREATE PROCEDURE GetClientOrders
+    @custid INT
+AS
+BEGIN
+    SELECT 
+        orderid,
+        requireddate,
+        shippeddate,
+        shipname,
+        shipaddress,
+        shipcity
+    FROM 
+        StoreSample.Sales.Orders
+    WHERE 
+        custid = @custid
+    ORDER BY 
+        orderdate DESC; -- Ordenar por fecha de orden descendente
+END;
+
+GetClientOrders 4
+
+
+-- REQUERIMIENTO 3 
+--Get employees
+--• Crear una consulta que retorne todos los empleados
+--• Tabla: Employees
+--• Columnas
+--o Empid
+--o FullName: concatenar firstname y lastname
+CREATE PROCEDURE GetEmployees
+AS
+BEGIN
+    SELECT 
+        empid,
+        (firstname + ' ' + lastname) AS FullName -- Concatenar firstname y lastname
+    FROM 
+        StoreSample.HR.Employees
+    ORDER BY 
+        lastname, firstname; -- Ordenar por apellido y nombre
+END;
+
+GetEmployees
+
+
+-- REQUERIMIENTO 4
+--Get Shippers
+--• Crear una consulta que retorne todos los transportistas
+--• Tabla: Shippers
+--• Columnas
+--o Shipperid
+--o Companyname
+CREATE PROCEDURE GetShippers
+AS
+BEGIN
+    SELECT 
+        shipperid,
+        companyname
+    FROM 
+        StoreSample.Sales.Shippers
+    ORDER BY 
+        companyname; -- Ordenar por nombre de la compañía
+END;
+
+GetShippers
+
+
+-- REQUERIMIENTO 5
+--Get Products
+--• Crear una consulta que retorne todos los productos
+--• Tabla: Products
+--• Columnas
+--o Productid
+--o Productname
+CREATE PROCEDURE GetProducts
+AS
+BEGIN
+    SELECT 
+        productid,
+        productname
+    FROM 
+        StoreSample.Production.Products
+    ORDER BY 
+        productname; -- Ordenar por nombre del producto
+END;
+
+GetProducts
+
+-- REQUERIMIENTO 6
+--Add New Order
+--• Crear un script usando Transact SQL que permita ingresar una nueva orden y agregar un producto 
+--a dicha orden
+--• Columnas de la Orden
+--o Empid: Employee Id
+--o Shipperid
+--o Shipname
+--o Shipaddress
+--o Shipcity
+--o Orderdate
+--o Requireddate
+--o Shippeddate
+--o Freight
+--o Shipcountry
+--• Columnas de OrderDetails
+--o Orderid: Id de la orden creada anteriormente
+--Prueba Técnica – Desarrollador 7
+--o Productid
+--o Unitprice
+--o Qty
+--o Discount
+-- Crear un procedimiento almacenado para agregar una nueva orden y sus detalles
+CREATE PROCEDURE AddNewOrder
+    @empid INT,               -- Employee ID
+    @shipperid INT,           -- Shipper ID
+    @shipname NVARCHAR(40),   -- Ship Name
+    @shipaddress NVARCHAR(60),-- Ship Address
+    @shipcity NVARCHAR(15),   -- Ship City
+    @orderdate DATETIME,      -- Order Date
+    @requireddate DATETIME,   -- Required Date
+    @shippeddate DATETIME,    -- Shipped Date (puede ser NULL)
+    @freight MONEY,           -- Freight
+    @shipcountry NVARCHAR(15),-- Ship Country
+    @productid INT,           -- Product ID para OrderDetails
+    @unitprice MONEY,         -- Unit Price para OrderDetails
+    @qty SMALLINT,            -- Quantity para OrderDetails
+    @discount NUMERIC(4, 3)   -- Discount para OrderDetails
+AS
+BEGIN
+    BEGIN TRY
+        BEGIN TRANSACTION; -- Iniciar una transacción para asegurar la integridad de los datos
+
+        -- Insertar la nueva orden en la tabla Orders
+        INSERT INTO StoreSample.Sales.Orders (
+            custid, empid, shipperid, shipname, shipaddress, shipcity, 
+            orderdate, requireddate, shippeddate, freight, shipcountry
+        )
+        VALUES (
+            NULL, -- custid puede ser NULL si no se asocia a un cliente
+            @empid, @shipperid, @shipname, @shipaddress, @shipcity, 
+            @orderdate, @requireddate, @shippeddate, @freight, @shipcountry
+        );
+
+        -- Obtener el ID de la orden recién insertada
+        DECLARE @newOrderId INT;
+        SET @newOrderId = SCOPE_IDENTITY();
+
+        -- Insertar el detalle de la orden en la tabla OrderDetails
+        INSERT INTO StoreSample.Sales.OrderDetails (
+            orderid, productid, unitprice, qty, discount
+        )
+        VALUES (
+            @newOrderId, @productid, @unitprice, @qty, @discount
+        );
+
+        COMMIT TRANSACTION; -- Confirmar la transacción si todo está correcto
+        PRINT 'Orden y detalle agregados exitosamente. OrderID: ' + CAST(@newOrderId AS NVARCHAR);
+    END TRY
+    BEGIN CATCH
+        ROLLBACK TRANSACTION; -- Revertir la transacción en caso de error
+        PRINT 'Error al agregar la orden: ' + ERROR_MESSAGE();
+    END CATCH
+END;
+
+AddNewOrder
+    @empid = 1,               -- Employee ID
+    @shipperid = 2,           -- Shipper ID
+    @shipname = 'Ship to John', -- Ship Name
+    @shipaddress = '123 Main St', -- Ship Address
+    @shipcity = 'New York',   -- Ship City
+    @orderdate = '2023-10-25',-- Order Date
+    @requireddate = '2023-10-30', -- Required Date
+    @shippeddate = NULL,      -- Shipped Date (puede ser NULL)
+    @freight = 15.75,         -- Freight
+    @shipcountry = 'USA',     -- Ship Country
+    @productid = 1,           -- Product ID
+    @unitprice = 18.00,       -- Unit Price
+    @qty = 5,                 -- Quantity
+    @discount = 0.05;         -- Discount
