@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "6000:5000" # Cambia el puerto externo de la API
+      - "6001:5001" # Cambia el puerto externo de la API
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__ConexSqlServer=Server=db;Database=StoreSample;User Id=sa;Password=StrongP@ssw0rd!;Encrypt=False;TrustServerCertificate=True;
+    depends_on:
+      - db
+
+  db:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: sqlserver
+    ports:
+      - "15432:1433" # Cambia el puerto externo del SQL Server
+    environment:
+      SA_PASSWORD: "StrongP@ssw0rd!"
+      ACCEPT_EULA: "Y"

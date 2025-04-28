@@ -14,8 +14,8 @@ var logger = new LoggerConfiguration()
 
 //builder.Logging.ClearProviders();
 builder.Logging.AddSerilog(logger);
-// Add services to the container.
 
+// Add services to the container.
 builder.Services.AddControllers();
 builder.Services.AddAplicacionServices();
 builder.Services.ConfigureRateLimiting();
@@ -41,6 +41,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Aplicar migraciones automáticamente al iniciar la aplicación
 using (var scope = app.Services.CreateScope())
 {
     var services = scope.ServiceProvider;
@@ -48,13 +50,17 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var context = services.GetRequiredService<ApplicationDbContext>();
-        await context.Database.MigrateAsync();
-        await context.Database.MigrateAsync();
+
+        // Aplicar migraciones pendientes
+        context.Database.Migrate();
+
+        // Ejecutar comandos adicionales si es necesario
+        loggerFactory.CreateLogger<Program>().LogInformation("Migraciones aplicadas correctamente.");
     }
     catch (Exception ex)
     {
         var _logger = loggerFactory.CreateLogger<Program>();
-        _logger.LogError(ex, "Ocurrio un error durante la migracion");
+        _logger.LogError(ex, "Ocurrió un error durante la migración");
     }
 }
 
